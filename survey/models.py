@@ -3,7 +3,7 @@ from django.db import models
 
 class Survey(models.Model):
     content = models.TextField()
-    users = models.ManyToManyField('user.User', through = 'UsersSurveys')
+    users   = models.ManyToManyField('user.User', through = 'UserSurvey')
 
     class Meta:
         db_table = 'surveys'
