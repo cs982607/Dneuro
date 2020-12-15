@@ -5,7 +5,7 @@ class User(models.Model):
     password = models.CharField(max_length=200)
     sex      = models.CharField(max_length=20)
     birthday = models.DateField
-    country  = models.ForeignKey('country',through='Country')
+    country  = models.ForeignKey('country',through='Country', on_delete=models.DO_NOTHING)
 
     class Meta:
         db_table='users'
