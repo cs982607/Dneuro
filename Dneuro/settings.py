@@ -52,7 +52,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'corsheaders.middleware.CorsMiddleware',
 ]
-
+ 
 ROOT_URLCONF = 'Dneuro.urls'
 
 TEMPLATES = [
