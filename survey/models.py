@@ -16,3 +16,9 @@ class UserSurvey(models.Model):
 
     class Meta:
         db_table = 'users_surveys'
+
+class InvestType(models.Model):
+    content = models.TextField()
+
+    class Meta:
+        db_table = 'invest_types'
