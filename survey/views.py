@@ -18,64 +18,95 @@ from user.models  import (
 )
 from user.utils  import Login_decorator
 
+import my_settings
+
+
+def generate_response_for_survey(user_id):
+    survey = None
+    count = UserSurvey.objects.filter(user_id=user_id).count() 
+    if count < my_settings.SURVEYS_COUNT:
+        next_survey = Survey.objects.get(id = count + 1)
+        survey = {
+                    'id'     : next_survey.id,
+                    'content': next_survey.content,
+                }
+    else:
+        items = list(UserSurvey.objects.values('answer').annotate(count=Count('id')))
+        item = max(items, key=lambda x : x['count'])
+                                
+        if item['answer'] == 'A':
+            survey= {
+                        'id'     : 0,
+                        'content': InvestType.objects.get(id=1).content
+                    }
+        else:
+            survey = {
+                        'id'     : 0,
+                        'content': InvestType.objects.get(id=2).content
+                    }
+
+    return survey
+
 
 class SurveyStartView(View):
     @Login_decorator 
     def get(self, request):
         try:
-            survey = Survey.objects.first()
-        
-            return JsonResponse({"message":"SUCCESS", "survey":{"id":survey.id, "content":survey.content}}, status=200)
-        except survey.DoesNotExist:
+            message = {
+                        "message":"SUCCESS", 
+                        "survey":{
+                            "id"     : 0, 
+                            "content": ''
+                            }, 
+                        "progress":{
+                            "current": 1,
+                            "total"  : my_settings.SURVEYS_COUNT 
+                        }
+                    }
+
+            user_serveys = UserSurvey.objects.select_related('user', 'survey')
+            surveys      = user_serveys.filter(user__email = request.user['email'])
+
+            if not surveys.count() or surveys.count() == my_settings.SURVEYS_COUNT:
+                # user의 설문 정보가 없거나 이미 완료한 상태이면 처음부터 시작
+                surveys.delete()
+                survey = Survey.objects.first()
+                message['survey']['id']      = survey.id
+                message['survey']['content'] = survey.content
+            else:
+                # user의 설문 정보가 중간밖에 없다면
+                survey = generate_response_for_survey(User.objects.get(email=request.user['email']).id)
+                message['survey']['id']        = survey['id']
+                message['survey']['content']   = survey['content']
+                message['progress']['current'] = surveys.count() + 1
+
+            return JsonResponse(message, status=200)
+
+        except Survey.DoesNotExist:
             return JsonResponse({"message":"DATA_NOT_EXIST"}, status=200)
 
 class SurveyResponseView(View):
-    def __init__(self):
-        self.MAXIMUM_SURVEYS = 3
-    
     @transaction.atomic
     @Login_decorator
     def post(self, request):
-        data = json.loads(request.body)
+        try:
+            data = json.loads(request.body)
 
-        survey_id   = data['survey_id']
-        answer      = data['answer']
-        time        = data['time']
+            survey_id   = data['survey_id']
+            answer      = data['answer']
+            time        = data['time']
+            user        = User.objects.get(email=request.user['email'])
+            
+            UserSurvey.objects.create(
+                            user_id     = user.id, 
+                            survey_id   = survey_id, 
+                            answer      = answer,
+                            time        = time,
+            )
 
-        user = User.objects.get(email=request.user['email'])
-        UserSurvey.objects.update_or_create(user_id = user.id, survey_id = survey_id, defaults={'answer':answer, 'time':time})
+            result = generate_response_for_survey(user.id)
 
-        result = self.generate_response_for_survey(user.id, survey_id, answer)
+            return JsonResponse({"message":"SUCCESS", "survey":result}, status=201)
+        except:
+            return JsonResponse({"message":"KEY_ERROR"}, status=400)
 
-        return JsonResponse({"message":"SUCCESS", "survey":result}, status=201)
-
-    def generate_response_for_survey(self, user_id, survey_id, answer):
-        '''
-        응답한 설문조사 및 결과에 따라 다음 Survey 대상을 search, 
-        해당 Survey ID를 리턴하는 business model 구현.
-
-        만약 모든 설문이 끝나면 Survey ID 대신 '설문조사 결과'를 return.
-        '''
-        survey = None
-        if UserSurvey.objects.filter(user_id=user_id).exclude(answer='').count() < self.MAXIMUM_SURVEYS:
-            next_survey = Survey.objects.get(id = survey_id + 1)
-            survey = {
-                        'id'     : next_survey.id,
-                        'content': next_survey.content,
-                    }
-        else:
-            items = list(UserSurvey.objects.values('answer').annotate(count=Count('id')))
-            item = max(items, key=lambda x : x['count'])
-                                    
-            if item['answer'] == 'A':
-                survey= {
-                            'id'     : 0,
-                            'content': InvestType.objects.get(id=1).content
-                        }
-            else:
-                survey = {
-                            'id'     : 0,
-                            'content': InvestType.objects.get(id=2).content
-                        }
-
-        return survey
