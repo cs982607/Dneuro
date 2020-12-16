@@ -1,10 +1,22 @@
-import json, jwt, re, bcrypt
+import(
+    json,
+    jwt,
+    re,
+    bcrypt
+)
 
 from django.views     import View
 from django.http      import JsonResponse
 
-from .models          import User, Country
-from my_settings      import SECRET, JWT_ALGORITHM
+from .models          import(
+    User,
+    Country
+    )
+from my_settings      import (
+    SECRET,
+    JWT_ALGORITHM
+    )
+from .utils           import Login_decorator
 
 class SignUpView(View):
     def post(self, request):
@@ -60,5 +72,9 @@ class LogInView(View):
             return JsonResponse({'message':'USER_DOES_NOT_EXIST'}, status=400)
 
 
+class Login_decoratorView(View):
+    @Login_decorator
+    def post(self, request):
+        return JsonResponse({'message':'SUCCESS'}, status=200)
 
 
