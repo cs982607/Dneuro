@@ -1,8 +1,5 @@
-import (
-    json,
-    jwt,
-    re
-)
+import json, jwt, re
+
 import bcrypt
 from django.test import (
     TestCase,

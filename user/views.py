@@ -21,7 +21,7 @@ class SignUpView(View):
             email    = data['email']
             password = data['password']
 
-            email_pattern    = '[a-zA-Z0-9_-]+@[a-z]+.[a+z]'
+            email_pattern    = '^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$'
             password_pattern = '[A-Za-z0-9!@#$%^&*]'
 
             if not re.match(email_pattern, email):
@@ -35,7 +35,6 @@ class SignUpView(View):
                 country_id = 1
 
             hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-
 
             user = User.objects.create(
                email      = email,
