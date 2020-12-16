@@ -1,8 +1,4 @@
-import (
-    jwt,
-    json
-)
-
+import jwt,json
 from django.http  import JsonResponse
 
 from .models      import User
