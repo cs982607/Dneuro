@@ -1,16 +1,21 @@
-import json, jwt, re, bcrypt
+import json, jwt, re, bcrypt, requests
 
-
+from random           import randint
 from django.views     import View
 from django.http      import JsonResponse
 
 from .models          import(
     User,
-    Country
+    Country,
+    AuthSms
     )
 from my_settings      import (
     SECRET,
-    JWT_ALGORITHM
+    JWT_ALGORITHM,
+    SMS_ACCESS_KEY_ID,
+    SMS_SERVICE_SECRET,
+    SMS_SEND_PHONE_NUMBER,
+    SMS_URL
     )
 from .utils           import Login_decorator
 
@@ -72,4 +77,26 @@ class Login_decoratorView(View):
     def post(self, request):
         return JsonResponse({'message':'SUCCESS'}, status=200)
 
+class AuthSmsSendView(View):
+    def post(self, request):
+        try:
+            data                = json.loads(request.body)
+            phone_number        = data['phone_number']
+            AuthSms.objects.update_or_create(phone_number = phone_number)
+
+            return JsonResponse({'message':'SUCCESS'}, status=200)
+
+        except KeyError:
+            return JsonResponse({'message': 'KEY_ERROR'}, status=400)
+
+    def get(self, request):
+        try:
+            phone_number = request.GET.get('phone_number', '')
+            auth_number  = request.GET.get('auth_number', 0)
+            result       = AuthSms.check_auth_number(phone_number, auth_number)
+
+            return JsonResponse({'message': 'SUCCESS', 'result': result}, status=200)
+
+        except KeyError:
+            return JsonResponse({'message': 'KEY_ERROR'}, status=400)
 
