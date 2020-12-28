@@ -14,5 +14,6 @@ urlpatterns= [
     path('/signin'        , LogInView.as_view()),
     path('/test'          , Login_decoratorView.as_view()),
     path('/kakao/redirect', KakaoSignInView.as_view()),
-    path('/kakao'         , KakaoSignInCallbackView.as_view())
+    path('/kakao'         , KakaoSignInCallbackView.as_view()),
+    path('/sms'           , AuthSmsSendView.as_view())
 ]
