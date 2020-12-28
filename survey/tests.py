@@ -12,6 +12,8 @@ from .models     import (
         UserSurvey,
         InvestType,
         Category,
+        EffectiveDate,
+        Result,
 )
 
 import my_settings
@@ -20,7 +22,13 @@ import my_settings
 class SurveyTest(TestCase):
     def setUp(self):
         self.client = Client()
-        
+
+        EffectiveDate.objects.create(
+            id=1, 
+            start_at = datetime(2020, 12, 1), 
+            end_at = datetime(2020, 12, 31)
+        )
+
         country = Country.objects.create(name_kor='대한민국', name_eng='KOREA')
 
         User.objects.create(
@@ -44,26 +52,28 @@ class SurveyTest(TestCase):
         Category.objects.create(id=2, name='위험회피평가')
         Category.objects.create(id=3, name='손실회피평가')
 
-        Survey.objects.create(id=1, content='FKE_1', category_id=1)
-        Survey.objects.create(id=2, content='FKE_2', category_id=1)
-        Survey.objects.create(id=3, content='FKE_3', category_id=1)
-        Survey.objects.create(id=4, content='REE_1', category_id=2)
-        Survey.objects.create(id=5, content='REE_2', category_id=2)
-        Survey.objects.create(id=6, content='REE_3', category_id=2)
-        Survey.objects.create(id=7, content='REE_4', category_id=2)
-        Survey.objects.create(id=8, content='REE_5', category_id=2)
-        Survey.objects.create(id=9, content='LEE_1', category_id=3)
-        Survey.objects.create(id=10, content='LEE_2', category_id=3)
-        Survey.objects.create(id=11, content='LEE_3', category_id=3)
-        Survey.objects.create(id=12, content='LEE_4', category_id=3)
-        Survey.objects.create(id=13, content='LEE_5', category_id=3)
+        Survey.objects.create(id=1, content='FKE_1', category_id=1, effective_date_id=1)
+        Survey.objects.create(id=2, content='FKE_2', category_id=1, effective_date_id=1)
+        Survey.objects.create(id=3, content='FKE_3', category_id=1, effective_date_id=1)
+        Survey.objects.create(id=4, content='REE_1', category_id=2, effective_date_id=1)
+        Survey.objects.create(id=5, content='REE_2', category_id=2, effective_date_id=1)
+        Survey.objects.create(id=6, content='REE_3', category_id=2, effective_date_id=1)
+        Survey.objects.create(id=7, content='REE_4', category_id=2, effective_date_id=1)
+        Survey.objects.create(id=8, content='REE_5', category_id=2, effective_date_id=1)
+        Survey.objects.create(id=9, content='LEE_1', category_id=3, effective_date_id=1)
+        Survey.objects.create(id=10, content='LEE_2', category_id=3, effective_date_id=1)
+        Survey.objects.create(id=11, content='LEE_3', category_id=3, effective_date_id=1)
+        Survey.objects.create(id=12, content='LEE_4', category_id=3, effective_date_id=1)
+        Survey.objects.create(id=13, content='LEE_5', category_id=3, effective_date_id=1)
 
     def tearDown(self):
+        Result.objects.all().delete()
         UserSurvey.objects.all().delete()
         Survey.objects.all().delete()
         User.objects.all().delete()
         Country.objects.all().delete()
-
+        EffectiveDate.objects.all().delete()
+        
     def test_survey_get_start_success(self):
         response = self.client.get('/survey/start', **self.headers)
 
@@ -97,7 +107,7 @@ class SurveyTest(TestCase):
 
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.json()['survey']['content'], 'FKE_2')
-
+        
     def test_survey_post_response_and_return_result_success(self):
         arr = []
         arr.append(UserSurvey(user_id=1, survey_id=1, answer='A', time=5))
@@ -129,4 +139,3 @@ class SurveyTest(TestCase):
         self.assertEqual(result['finance_knowledge_evaluation'], 2)
         self.assertEqual(result['risk_evasion_evaluation'], 5)
         self.assertEqual(result['loss_evasion_evaluation'], 2)
-

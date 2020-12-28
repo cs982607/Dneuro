@@ -8,10 +8,19 @@ class Category(models.Model):
         db_table = 'survey_categories'
 
 
+class EffectiveDate(models.Model):
+    start_at = models.DateField(null=True)
+    end_at   = models.DateField(null=True)
+
+    class Meta:
+        db_table = 'effective_dates'
+
+
 class Survey(models.Model):
-    content  = models.TextField()
-    users    = models.ManyToManyField('user.User', through='UserSurvey')
-    category = models.ForeignKey(Category, on_delete=models.DO_NOTHING)
+    content         = models.TextField()
+    users           = models.ManyToManyField('user.User', through='UserSurvey')
+    category        = models.ForeignKey(Category, on_delete=models.DO_NOTHING)
+    effective_date  = models.ForeignKey(EffectiveDate, on_delete=models.DO_NOTHING, default=1)
     
     class Meta:
         db_table = 'surveys'
@@ -26,6 +35,15 @@ class UserSurvey(models.Model):
 
     class Meta:
         db_table = 'users_surveys'
+
+
+class Result(models.Model):
+    user            = models.ForeignKey('user.User', on_delete=models.DO_NOTHING)
+    data            = models.TextField(null=True)
+    effective_date  = models.ForeignKey(EffectiveDate, on_delete=models.DO_NOTHING, default=1)
+
+    class Meta:
+        db_table = 'results'
 
 
 class InvestType(models.Model):

@@ -9,6 +9,9 @@ from django.db.models import (
 from .models      import (
         Survey,
         UserSurvey,
+        EffectiveDate,
+        EvasionGrade,
+        Result,
 )
 from user.models  import (
         User
@@ -17,10 +20,9 @@ from user.utils  import Login_decorator
 
 import my_settings
 
-
 def make_survey_result(user_id):
     user = User.objects.get(id = user_id)
-    
+        
     FKE = 'finance_knowledge_evaluation'
     REE = 'risk_evasion_evaluation'
     LEE = 'loss_evasion_evaluation'
@@ -32,7 +34,13 @@ def make_survey_result(user_id):
             FKE:3,
             REE:7,
             LEE:7,
-            }
+            'evasion_grade':{}
+    }
+
+    evasion_grade = {}
+    for evasion in EvasionGrade.objects.all().order_by('-grade'):
+        evasion_grade[evasion.grade] = evasion.tendency
+    result['evasion_grade'] = evasion_grade
 
     user_surveys = UserSurvey.objects.select_related('survey').filter(user_id = user_id)
     FKEs = list(user_surveys.filter(survey__category_id = 1).order_by('survey_id'))
@@ -73,6 +81,17 @@ def make_survey_result(user_id):
     if LEEs[4].answer == 'B':
         result[LEE] -= 1
 
+    updated, created = Result.objects.update_or_create(
+            user_id=user_id, 
+            effective_date_id=user_surveys.last().survey.effective_date_id,  
+            defaults={
+                'data':json.dumps(result)
+                }
+            )
+    
+    if updated or created:
+        user_surveys.all().delete()
+
     return result
     
 
@@ -80,7 +99,7 @@ def generate_response_for_survey(user_id):
     response     = {
             "survey":{
                 "id"     : 0, 
-                "content": '',
+                "content": {},
                 }, 
             "progress":{
                 "current": 1,
@@ -98,6 +117,21 @@ def generate_response_for_survey(user_id):
         response['survey']['id']        = survey.id
         response['survey']['content']   = survey.content
 
+        # parsing 해서 주는 방법
+        # question, *answers = survey.content.split('|')
+        # content = {
+        #     'question':'',
+        #     'examples':[]
+        #     }
+
+        # for answer in *answers:
+        #     data         = {}
+        #     arr = answer.split(')')
+        #     data.id      = arr[0][-1:0].upper()
+        #     data.example = arr[1]
+        #     content['examples'].append(data)
+
+        # response['survey']['content'] = json.dumps(content)
         return response
         
 
@@ -160,5 +194,13 @@ class ResultView(View):
     def get(self, request):
         user_id = User.objects.get(email=request.user['email']).id
         
-        return JsonResponse(make_survey_result(user_id), status=200)
+        result = Result.objects.get(user_id = user_id)
+        result = json.loads(result.data)
+
+        evasion_grade = {}
+        for evasion in EvasionGrade.objects.all().order_by('grade'):
+            evasion_grade[evasion.grade] = evasion.tendency.replace('{0}', '')
+        result['evasion_grade'] = evasion_grade
+        
+        return JsonResponse(result, status=200)
 
