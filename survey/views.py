@@ -27,22 +27,27 @@ def generate_response_for_survey(user_id):
     if count < my_settings.SURVEYS_COUNT:
         next_survey = Survey.objects.get(id = count + 1)
         survey = {
+                'survey':{
                     'id'     : next_survey.id,
                     'content': next_survey.content,
+                    },
+                "progress":{
+                    "current": UserSurvey.objects.filter(user_id=user_id).count() + 1,
+                    "total"  : my_settings.SURVEYS_COUNT 
+                    }
                 }
+
     else:
         items = list(UserSurvey.objects.values('answer').annotate(count=Count('id')))
         item = max(items, key=lambda x : x['count'])
                                 
         if item['answer'] == 'A':
             survey= {
-                        'id'     : 0,
-                        'content': InvestType.objects.get(id=1).content
+                        'result': InvestType.objects.get(id=1).content
                     }
         else:
             survey = {
-                        'id'     : 0,
-                        'content': InvestType.objects.get(id=2).content
+                        'result': InvestType.objects.get(id=2).content
                     }
 
     return survey
@@ -71,13 +76,15 @@ class SurveyStartView(View):
                 # user의 설문 정보가 없거나 이미 완료한 상태이면 처음부터 시작
                 surveys.delete()
                 survey = Survey.objects.first()
+                
                 message['survey']['id']      = survey.id
                 message['survey']['content'] = survey.content
+
             else:
                 # user의 설문 정보가 중간밖에 없다면
                 survey = generate_response_for_survey(User.objects.get(email=request.user['email']).id)
-                message['survey']['id']        = survey['id']
-                message['survey']['content']   = survey['content']
+                message['survey']['id']        = survey['survey']['id']
+                message['survey']['content']   = survey['survey']['content']
                 message['progress']['current'] = surveys.count() + 1
 
             return JsonResponse(message, status=200)
@@ -90,6 +97,11 @@ class SurveyResponseView(View):
     @Login_decorator
     def post(self, request):
         try:
+            user = User.objects.get(email = request.user['email'])
+
+            if UserSurvey.objects.filter(user_id = user.id).count() >= my_settings.SURVEYS_COUNT:
+                return JsonResponse({"message":"ALREADY_DONE"}, status=201)
+            
             data = json.loads(request.body)
 
             survey_id   = data['survey_id']
@@ -97,16 +109,24 @@ class SurveyResponseView(View):
             time        = data['time']
             user        = User.objects.get(email=request.user['email'])
             
+            UserSurvey.objects.update_or_create(survey_id=survey_id, user_id=user.id,
+                                                defaults={
+                                                    'answer':answer,
+                                                    'time':time
+                                                    })
+            '''
             UserSurvey.objects.create(
                             user_id     = user.id, 
                             survey_id   = survey_id, 
                             answer      = answer,
                             time        = time,
             )
+            '''
 
             result = generate_response_for_survey(user.id)
 
             return JsonResponse({"message":"SUCCESS", "survey":result}, status=201)
         except:
             return JsonResponse({"message":"KEY_ERROR"}, status=400)
+
 
