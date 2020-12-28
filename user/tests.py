@@ -6,6 +6,10 @@ from django.test import (
     Client
     )
 from django.http import JsonResponse
+from unittest.mock import (
+    patch,
+    MagicMock
+    )
 
 from my_settings import (
     SECRET,
@@ -257,7 +261,6 @@ class LoginDecoratorTestCase(TestCase):
         self.assertEquals(response.status_code, 400)
 
 
-
 class AuthSmsTestCase(TestCase):
     def setUp(self):
         self.URL    = '/user/sms'
@@ -292,4 +295,54 @@ class AuthSmsTestCase(TestCase):
         response = self.client.get('/user/sms', {'phone_number':'01041361668','auth_number':sms_info.auth_number}, content_type='application/json')
         self.assertEqual(response.json(),{'message':'SUCCESS', 'result':True})
         self.assertEquals(response.status_code, 200)
+
+class KakaoSignInTestCase(TestCase):
+    def setUp(self):
+        self.URL    = '/user/kakao/redirect'
+        self.client = Client()
+
+        self.EMAIL    = 'gustjr@gmail.com'
+        self.PASSWORD = 'gustjr12'
+        self.SEX      = 'man'
+        self.BIRTHDAY = '2020-04-30'
+        self.COUNTRY  = '대한민국'
+        self.KAKAO_ID = 123
+
+        self.country = Country.objects.create(
+            id       = 1,
+            name_kor = self.COUNTRY,
+            name_eng = 'KOREA'
+        )
+
+        self.user = User.objects.create(
+            id         = 1,
+            email      = self.EMAIL,
+            password   = self.PASSWORD,
+            sex        = self.SEX,
+            birthday   = self.BIRTHDAY,
+            country_id = 1,
+            kakao_id   = self.KAKAO_ID
+        )
+        self.token = jwt.encode({'email':self.user.email}, SECRET, algorithm= JWT_ALGORITHM).decode('utf-8')
+
+
+    def tearsDown(self):
+        pass
+
+    @patch('user.views.requests')
+    def test_user_kakao_signin_success(self, mocked_request):
+
+        class FakerResopons:
+            def json(self):
+                return {
+                    'kakao_id' : self.KAKAO_ID,
+                    'email'    : self.user.email
+                }
+
+                mocked_request.get =  MagicMock(return_value = FakerResopons())
+                header = {'HTTP_Authorization':'fake_token.1234'}
+                response = self.client.get(self.URL, content_type='application/json', **header)
+                self.assertEqual(response.json(),{'token':'fake_token.1234'})
+                self.assertEquals(response.status_code, 200)
+
 
