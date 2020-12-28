@@ -1,11 +1,13 @@
 from django.urls import path
 
 from .views import (
-        SurveyStartView,
-        SurveyResponseView,
+        StartView,
+        ResponseView,
+        ResultView,
 )
 
 urlpatterns = [
-    path('/start', SurveyStartView.as_view()),
-    path('/input', SurveyResponseView.as_view()),
+    path('/start', StartView.as_view()),
+    path('/input', ResponseView.as_view()),
+    path('/result', ResultView.as_view()),
 ]
