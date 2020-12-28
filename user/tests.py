@@ -14,7 +14,8 @@ from my_settings import (
 
 from .models     import (
     User,
-    Country
+    Country,
+    AuthSms
     )
 from .utils      import Login_decorator
 
@@ -237,7 +238,6 @@ class LoginDecoratorTestCase(TestCase):
         self.assertEqual(response.json(),{'message':'SUCCESS'})
         self.assertEquals(response.status_code, 200)
 
-
     def test_invalid_token(self):
 
         headers = {
@@ -255,3 +255,41 @@ class LoginDecoratorTestCase(TestCase):
         response = self.client.post(self.URL, content_type='application/json', **headers)
         self.assertEqual(response.json(),{'message':'INVALID_USER'})
         self.assertEquals(response.status_code, 400)
+
+
+
+class AuthSmsTestCase(TestCase):
+    def setUp(self):
+        self.URL    = '/user/sms'
+        self.client = Client()
+
+        self.authsms = AuthSms.objects.create(
+            phone_number = '01041361668'
+        )
+
+    def tearsDown(self):
+        pass
+
+    def test_post_success(self):
+
+        request = {
+            'phone_number'      : '01041361668'
+        }
+
+        response = self.client.post(self.URL, request, content_type='application/json')
+        self.assertEqual(response.json(),{'message':'SUCCESS'})
+        self.assertEquals(response.status_code, 200)
+
+    def test_post_key_error(self):
+
+        response = self.client.post(self.URL, content_type='application/json')
+        self.assertEqual(response.json(),{'message':'KEY_ERROR'})
+        self.assertEquals(response.status_code, 400)
+
+    def test_get_success(self):
+
+        sms_info = AuthSms.objects.get(phone_number='01041361668')
+        response = self.client.get('/user/sms', {'phone_number':'01041361668','auth_number':sms_info.auth_number}, content_type='application/json')
+        self.assertEqual(response.json(),{'message':'SUCCESS', 'result':True})
+        self.assertEquals(response.status_code, 200)
+
