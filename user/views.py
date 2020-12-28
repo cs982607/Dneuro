@@ -3,6 +3,7 @@ import json, jwt, re, bcrypt, requests
 from random           import randint
 from django.views     import View
 from django.http      import JsonResponse
+from django.shortcuts import redirect
 
 from .models          import(
     User,
@@ -15,7 +16,8 @@ from my_settings      import (
     SMS_ACCESS_KEY_ID,
     SMS_SERVICE_SECRET,
     SMS_SEND_PHONE_NUMBER,
-    SMS_URL
+    SMS_URL,
+    KAKAO_REST_API
     )
 from .utils           import Login_decorator
 
@@ -99,4 +101,56 @@ class AuthSmsSendView(View):
 
         except KeyError:
             return JsonResponse({'message': 'KEY_ERROR'}, status=400)
+
+class KakaoSignInView(View):
+    def get(self, request):
+        client_id    = KAKAO_REST_API
+        redirect_uri = "http://127.0.0.1:8000/user/kakao"
+
+        return redirect(
+            f"https://kauth.kakao.com/oauth/authorize?client_id={client_id}&redirect_uri={redirect_uri}&response_type=code"
+        )
+
+class KakaoSignInCallbackView(View):
+    def get(self, request):
+        try:
+            code         = request.GET.get('code')
+            client_id    = KAKAO_REST_API
+            redirect_uri = "http://127.0.0.1:8000/user/kakao"
+
+            token_request = requests.get(f"https://kauth.kakao.com/oauth/token?grant_type=authorization_code&client_id={client_id}&redirect_uri={redirect_uri}&code={code}")
+            token_json    = token_request.json()
+            error         = token_json.get('error', None)
+
+            if error is not None :
+                return JsonResponse({'message':'INVALID_CODE'}, status=400)
+
+            token = token_json.get('access_token')
+
+            profile_request = requests.get(
+                "https://kapi.kakao.com/v2/user/me", headers= {"Authorization" : f"Bearer{token}"},)
+            profile_json = profile_request.json()
+
+
+            kakao_account = profile_json.get("kakao_account")
+            email         = profile_json.get("email", None)
+            kakao_id      = profile_json.get("id")
+
+            if User.objects.filter(kakao_id = kakao_id).exists():
+                user  = User.objects.filter(kakao_id=kakao_id)
+                token = jwt.encode({"email":email}, SECRET, algorithm=JWT_ALGORITHM).decode("utf-8")
+                return JsonResponse({"token":token}, status=200)
+
+            User.objects.create(
+                kakao_id = kakao_id,
+                email    = email
+            )
+            token = jwt.encode({"email":email}, SECRET, algorithm=JWT_ALGORITHM).decode("utf-8")
+
+            return JsonResponse({"token":token}, status=200)
+
+        except  KeyError:
+            return JsonResponse({'message':'KEY_ERROR'}, status=400)
+
+
 
