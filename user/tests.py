@@ -122,7 +122,6 @@ class SignUpTestCase(TestCase):
         self.assertEqual(response.json(),{'message':'KEY_ERROR'})
         self.assertEquals(response.status_code, 400)
 
-
 class SignInTestCase(TestCase):
     def setUp(self):
         self.URL    = '/user/signin'
@@ -259,7 +258,6 @@ class LoginDecoratorTestCase(TestCase):
         response = self.client.post(self.URL, content_type='application/json', **headers)
         self.assertEqual(response.json(),{'message':'INVALID_USER'})
         self.assertEquals(response.status_code, 400)
-
 
 class AuthSmsTestCase(TestCase):
     def setUp(self):
