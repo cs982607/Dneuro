@@ -103,40 +103,19 @@ class AuthSmsSendView(View):
             return JsonResponse({'message': 'KEY_ERROR'}, status=400)
 
 class KakaoSignInView(View):
-    def get(self, request):
-        client_id    = KAKAO_REST_API
-        redirect_uri = "http://127.0.0.1:8000/user/kakao"
-            # redirect 서버변경 시 필수 변경
-
-        return redirect(
-            f"https://kauth.kakao.com/oauth/authorize?client_id={client_id}&redirect_uri={redirect_uri}&response_type=code"
-        )
-
-class KakaoSignInCallbackView(View):
-    def get(self, request):
+    def post(self, request):
         try:
-            code         = request.GET.get('code')
-            client_id    = KAKAO_REST_API
-            redirect_uri = "http://127.0.0.1:8000/user/kakao"
-            # redirect 서버변경 시 필수 변경
+            token    = request.headers['Authorization']
+            profile  = requests.post("https://kapi.kakao.com/v2/user/me", headers= {"Authorization" : f"Bearer{token}"})
 
-            token_request = requests.get(f"https://kauth.kakao.com/oauth/token?grant_type=authorization_code&client_id={client_id}&redirect_uri={redirect_uri}&code={code}")
-            token_json    = token_request.json()
-            error         = token_json.get('error', None)
+            profile  = profile.json()
+            kakao_id = profile.get('id', None)
 
-            if error is not None :
-                return JsonResponse({'message':'INVALID_CODE'}, status=400)
-
-            token = token_json.get('access_token')
-
-            profile_request = requests.get(
-                "https://kapi.kakao.com/v2/user/me", headers= {"Authorization" : f"Bearer{token}"},)
-            profile_json = profile_request.json()
-
+            if not kakao_id:
+                return JsonResponse({'message':'INVALID_TOKEN'}, status=400)
 
             kakao_account = profile_json.get("kakao_account")
             email         = profile_json.get("email", None)
-            kakao_id      = profile_json.get("id")
 
             if User.objects.filter(kakao_id = kakao_id).exists():
                 user  = User.objects.filter(kakao_id=kakao_id)

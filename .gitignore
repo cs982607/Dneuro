@@ -279,4 +279,6 @@ csv_data/
 settings.json
 db_uploader.py
 db_truncate.py
+*.sql
+.DS_Store
 
