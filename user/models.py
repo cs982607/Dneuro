@@ -1,4 +1,4 @@
-import time, hmac, base64, hashlib, requests, json, datetime
+import time, hmac, base64, hashlib, json, datetime
 from random             import randint
 
 from django.db          import models

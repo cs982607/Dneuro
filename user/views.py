@@ -106,6 +106,7 @@ class KakaoSignInView(View):
     def get(self, request):
         client_id    = KAKAO_REST_API
         redirect_uri = "http://127.0.0.1:8000/user/kakao"
+            # redirect 서버변경 시 필수 변경
 
         return redirect(
             f"https://kauth.kakao.com/oauth/authorize?client_id={client_id}&redirect_uri={redirect_uri}&response_type=code"
@@ -117,6 +118,7 @@ class KakaoSignInCallbackView(View):
             code         = request.GET.get('code')
             client_id    = KAKAO_REST_API
             redirect_uri = "http://127.0.0.1:8000/user/kakao"
+            # redirect 서버변경 시 필수 변경
 
             token_request = requests.get(f"https://kauth.kakao.com/oauth/token?grant_type=authorization_code&client_id={client_id}&redirect_uri={redirect_uri}&code={code}")
             token_json    = token_request.json()
