@@ -114,8 +114,8 @@ class KakaoSignInView(View):
             if not kakao_id:
                 return JsonResponse({'message':'INVALID_TOKEN'}, status=400)
 
-            kakao_account = profile.get("kakao_account")
-            email         = profile.get("email", None)
+            kakao_account = profile_json.get("kakao_account")
+            email         = profile_json.get("email", None)
 
             if User.objects.filter(kakao_id = kakao_id).exists():
                 user  = User.objects.filter(kakao_id=kakao_id)
