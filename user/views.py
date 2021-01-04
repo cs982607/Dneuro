@@ -134,4 +134,33 @@ class KakaoSignInView(View):
             return JsonResponse({'message':'KEY_ERROR'}, status=400)
 
 
+class GoogleSignInView(View):
+    def post(self, request):
+        try:
+            token    = request.headers['Authorization']
+            profile  = requests.post("https://kapi.kakao.com/v2/user/me", headers= {"Authorization" : f"Bearer {token}"})
 
+            profile  = profile.json()
+            kakao_id = profile.get('id', None)
+
+            if not kakao_id:
+                return JsonResponse({'message':'INVALID_TOKEN'}, status=400)
+
+            kakao_account = profile.get("kakao_account")
+            email         = profile.get("email", '')
+
+            if User.objects.filter(kakao_id = kakao_id).exists():
+                user  = User.objects.get(kakao_id=kakao_id)
+                token = jwt.encode({"user_id":user.id}, SECRET, algorithm=JWT_ALGORITHM).decode("utf-8")
+                return JsonResponse({"token":token}, status=200)
+
+            user = User.objects.create(
+                kakao_id = kakao_id,
+                email    = email
+            )
+            token = jwt.encode({"user_id":user.id}, SECRET, algorithm=JWT_ALGORITHM).decode("utf-8")
+
+            return JsonResponse({"token":token}, status=200)
+
+        except  KeyError:
+            return JsonResponse({'message':'KEY_ERROR'}, status=400)

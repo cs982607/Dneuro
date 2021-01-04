@@ -12,7 +12,7 @@ def Login_decorator(func):
         try:
             token        = request.headers.get('Authorization', None)
             request.user = jwt.decode(token, SECRET, algorithm=JWT_ALGORITHM)
-            user = User.objects.get(email=request.user['email'])
+            user = User.objects.get(user_id=request.user['id'])
 
         except jwt.exceptions.DecodeError:
             return JsonResponse({'message':'INVALID_TOKEN'}, status=400)
