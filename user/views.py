@@ -150,7 +150,7 @@ class GoogleSignInView(View):
             if not google_id:
                 return JsonResponse({'message':'INVALID_TOKEN'}, status=400)
 
-            email         = profile.get("Email", '')
+            email = profile.get("Email", '')
 
             if User.objects.filter(google_id = google_id).exists():
                 user  = User.objects.get(google_id=google_id)
@@ -163,7 +163,6 @@ class GoogleSignInView(View):
             )
             token = jwt.encode({"user_id":user.id}, SECRET, algorithm=JWT_ALGORITHM).decode("utf-8")
 
->>>>>>> 693ea4f (ADD: google login 로직 구현)
             return JsonResponse({"token":token}, status=200)
 
         except  KeyError:
