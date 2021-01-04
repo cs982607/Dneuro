@@ -1,4 +1,4 @@
-import time, hmac, base64, hashlib, json, datetime
+import time, hmac, base64, hashlib, json, datetime, requests
 from random             import randint
 
 from django.db          import models
@@ -20,12 +20,13 @@ class Country(models.Model):
         db_table='countries'
 
 class User(models.Model):
-    email    = models.EmailField(max_length=45, null=True)
-    password = models.CharField(max_length=200, null=True)
-    sex      = models.CharField(max_length=20, null=True)
-    birthday = models.DateField(null=True)
-    country  = models.ForeignKey(Country, on_delete=models.DO_NOTHING, null=True)
-    kakao_id = models.CharField(max_length=45, null=True)
+    email     = models.EmailField(max_length=45, null=True)
+    password  = models.CharField(max_length=200, null=True)
+    sex       = models.CharField(max_length=20, null=True)
+    birthday  = models.DateField(null=True)
+    country   = models.ForeignKey(Country, on_delete=models.DO_NOTHING, null=True)
+    kakao_id  = models.CharField(max_length=45, null=True)
+    google_id = models.CharField(max_length=45, null=True)
 
     class Meta:
         db_table='users'
