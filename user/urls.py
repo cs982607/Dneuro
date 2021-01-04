@@ -6,6 +6,7 @@ from .views      import (
     Login_decoratorView,
     AuthSmsSendView,
     KakaoSignInView,
+    GoogleSignInView
     )
 
 urlpatterns= [
@@ -13,5 +14,6 @@ urlpatterns= [
     path('/signin'        , LogInView.as_view()),
     path('/test'          , Login_decoratorView.as_view()),
     path('/kakao'         , KakaoSignInView.as_view()),
+    path('/google'        , GoogleSignInView.as_view()), 
     path('/sms'           , AuthSmsSendView.as_view())
 ]
