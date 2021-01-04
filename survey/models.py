@@ -46,7 +46,7 @@ class Result(models.Model):
         db_table = 'results'
 
 
-class Invest_Type(models.Model):
+class InvestType(models.Model):
     content = models.TextField()
 
     class Meta:

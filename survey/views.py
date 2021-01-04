@@ -115,7 +115,7 @@ def make_survey_result(user_id):
         result['mbti'] = InvestType.objects.get(content__icontains = 'ENTJ')
     elif mbti_grade <= 45:
         result['mbti'] = InvestType.objects.get(content__icontains = 'INTP')
-    elif:
+    else:
         result['mbti'] = InvestType.objects.get(content__icontains = 'INTJ')
     
     updated, created = Result.objects.update_or_create(
