@@ -12,6 +12,7 @@ from .models      import (
         EffectiveDate,
         EvasionGrade,
         Result,
+        InvestType,
 )
 from user.models  import (
         User
@@ -34,7 +35,8 @@ def make_survey_result(user_id):
             FKE:3,
             REE:7,
             LEE:7,
-            'evasion_grade':{}
+            'evasion_grade':{},
+            'mbti':''
     }
 
     evasion_grade = {}
@@ -81,6 +83,41 @@ def make_survey_result(user_id):
     if LEEs[4].answer == 'B':
         result[LEE] -= 1
 
+    # mbti 평가
+    mbti_grade = (result[REE] - 1) * 7 + result(LEE)
+    if mbti_grade <= 3:
+        result['mbti'] = InvestType.objects.get(content__icontains = 'ESFP')
+    elif mbti_grade <= 6:
+        result['mbti'] = InvestType.objects.get(content__icontains = 'ESTP')
+    elif mbti_grade <= 9:
+        result['mbti'] = InvestType.objects.get(content__icontains = 'ISFP')
+    elif mbti_grade <= 12:
+        result['mbti'] = InvestType.objects.get(content__icontains = 'ISTP')
+    elif mbti_grade <= 15:
+        result['mbti'] = InvestType.objects.get(content__icontains = 'ESFJ')
+    elif mbti_grade <= 18:
+        result['mbti'] = InvestType.objects.get(content__icontains = 'ESTJ')
+    elif mbti_grade <= 21:
+        result['mbti'] = InvestType.objects.get(content__icontains = 'ISFJ')
+    elif mbti_grade <= 24:
+        result['mbti'] = InvestType.objects.get(content__icontains = 'ISTJ')
+    elif mbti_grade <= 27:
+        result['mbti'] = InvestType.objects.get(content__icontains = 'ENFP')
+    elif mbti_grade <= 30:
+        result['mbti'] = InvestType.objects.get(content__icontains = 'ENFJ')
+    elif mbti_grade <= 33:
+        result['mbti'] = InvestType.objects.get(content__icontains = 'INFP')
+    elif mbti_grade <= 36:
+        result['mbti'] = InvestType.objects.get(content__icontains = 'INFJ')
+    elif mbti_grade <= 39:
+        result['mbti'] = InvestType.objects.get(content__icontains = 'ENTP')
+    elif mbti_grade <= 42:
+        result['mbti'] = InvestType.objects.get(content__icontains = 'ENTJ')
+    elif mbti_grade <= 45:
+        result['mbti'] = InvestType.objects.get(content__icontains = 'INTP')
+    elif:
+        result['mbti'] = InvestType.objects.get(content__icontains = 'INTJ')
+    
     updated, created = Result.objects.update_or_create(
             user_id=user_id, 
             effective_date_id=user_surveys.last().survey.effective_date_id,  
@@ -117,23 +154,7 @@ def generate_response_for_survey(user_id):
         response['survey']['id']        = survey.id
         response['survey']['content']   = survey.content
 
-        # parsing 해서 주는 방법
-        # question, *answers = survey.content.split('|')
-        # content = {
-        #     'question':'',
-        #     'examples':[]
-        #     }
-
-        # for answer in *answers:
-        #     data         = {}
-        #     arr = answer.split(')')
-        #     data.id      = arr[0][-1:0].upper()
-        #     data.example = arr[1]
-        #     content['examples'].append(data)
-
-        # response['survey']['content'] = json.dumps(content)
         return response
-        
 
     if count < my_settings.SURVEYS_COUNT:
         # 설문 계속 진행
@@ -143,7 +164,7 @@ def generate_response_for_survey(user_id):
         response['survey']['content']   = next_survey.content
         response['progress']['current'] = UserSurvey.objects.filter(user_id=user_id).count() + 1
 
-        return response        
+        return response 
             
     # 설문조사 결과 리턴
     return make_survey_result(user_id)
@@ -153,7 +174,8 @@ class StartView(View):
     @Login_decorator 
     def get(self, request):
         try:
-            user_id = User.objects.get(email=request.user['email']).id
+            #user_id = User.objects.get(email=request.user['email']).id
+            user_id = User.objects.get(id=request.user['id'])
             message = generate_response_for_survey(user_id)
 
             return JsonResponse(message, status=200)
@@ -168,7 +190,8 @@ class ResponseView(View):
     def post(self, request):
         try:
             data = json.loads(request.body)
-            user = User.objects.get(email = request.user['email'])
+            #user = User.objects.get(email = request.user['email'])
+            user = User.objects.get(id = request.user['id'])
 
             if UserSurvey.objects.filter(user_id = user.id).count() >= my_settings.SURVEYS_COUNT:
                 return JsonResponse({"message":"ALREADY_DONE"}, status=201)
@@ -192,8 +215,8 @@ class ResponseView(View):
 class ResultView(View):
     @Login_decorator
     def get(self, request):
-        user_id = User.objects.get(email=request.user['email']).id
-        
+        #user_id = User.objects.get(email=request.user['email']).id
+        user_id = request.user['id']
         result = Result.objects.get(user_id = user_id)
         result = json.loads(result.data)
 
