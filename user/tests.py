@@ -148,7 +148,7 @@ class SignInTestCase(TestCase):
             country_id = 1
         )
         user = User.objects.get(id=self.user.id)
-        self.token = jwt.encode({'email':self.user.email}, SECRET, algorithm= JWT_ALGORITHM).decode('utf-8')
+        self.token = jwt.encode({'user_id':self.user.id}, SECRET, algorithm= JWT_ALGORITHM).decode('utf-8')
 
 
     def tearsDown(self):
@@ -222,9 +222,9 @@ class LoginDecoratorTestCase(TestCase):
             birthday   = self.BIRTHDAY,
             country_id = 1
         )
-        self.unknown_id = {'email' : 12343434}
+        self.unknown_id = {'user_id' : 12343434}
         self.invalid_id = {'i'  : self.user.id}
-        self.token = jwt.encode({'email':self.user.email}, SECRET, algorithm= JWT_ALGORITHM).decode('utf-8')
+        self.token = jwt.encode({'user_id':self.user.id}, SECRET, algorithm= JWT_ALGORITHM).decode('utf-8')
         self.unknown_token = jwt.encode(self.unknown_id, SECRET, algorithm= JWT_ALGORITHM).decode('utf-8')
         self.invalid_token = jwt.encode(self.invalid_id, SECRET, algorithm= JWT_ALGORITHM).decode('utf-8')
 
