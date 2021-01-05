@@ -229,3 +229,8 @@ class ResultView(View):
         
         return JsonResponse(result, status=200)
 
+class ResetView(View):
+    def post(self, request):
+        UserSurvey.objects.all().delete()
+
+        return JsonResponse({'message':'OK'}, status=200)
