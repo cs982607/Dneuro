@@ -177,7 +177,7 @@ class StartView(View):
     def get(self, request):
         try:
             #user_id = User.objects.get(email=request.user['email']).id
-            user_id = User.objects.get(id=request.user['user_id'])
+            user_id = request.user['user_id']
             message = generate_response_for_survey(user_id)
 
             return JsonResponse(message, status=200)
